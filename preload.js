@@ -1,11 +1,31 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+const listeners = new Map();
+
+function onEvent(channel, cb) {
+  const handler = (_e, ...args) => cb(...args);
+  ipcRenderer.on(channel, handler);
+  const key = channel + ':' + cb;
+  listeners.set(key, handler);
+  return key;
+}
+
+function offEvent(channel, cb) {
+  const key = channel + ':' + cb;
+  const handler = listeners.get(key);
+  if (handler) {
+    ipcRenderer.removeListener(channel, handler);
+    listeners.delete(key);
+  }
+}
+
 contextBridge.exposeInMainWorld('idk', {
   win: {
     minimize: () => ipcRenderer.invoke('win:minimize'),
     toggleMaximize: () => ipcRenderer.invoke('win:toggle-maximize'),
     close: () => ipcRenderer.invoke('win:close'),
-    onMaximized: (cb) => ipcRenderer.on('win:maximized', (_e, v) => cb(v)),
+    onMaximized: (cb) => onEvent('win:maximized', cb),
+    offMaximized: (cb) => offEvent('win:maximized', cb),
   },
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),
@@ -24,8 +44,10 @@ contextBridge.exposeInMainWorld('idk', {
     installed: () => ipcRenderer.invoke('versions:installed'),
     install: (id, url) => ipcRenderer.invoke('versions:install', id, url),
     delete: (id) => ipcRenderer.invoke('versions:delete', id),
-    onProgress: (cb) => ipcRenderer.on('dl:progress', (_e, p) => cb(p)),
-    onChanged: (cb) => ipcRenderer.on('versions:changed', () => cb()),
+    onProgress: (cb) => onEvent('dl:progress', cb),
+    offProgress: (cb) => offEvent('dl:progress', cb),
+    onChanged: (cb) => onEvent('versions:changed', cb),
+    offChanged: (cb) => offEvent('versions:changed', cb),
   },
   auth: {
     list: () => ipcRenderer.invoke('auth:list'),
@@ -35,15 +57,18 @@ contextBridge.exposeInMainWorld('idk', {
     microsoft: () => ipcRenderer.invoke('auth:microsoft'),
     select: (uuid) => ipcRenderer.invoke('auth:select', uuid),
     remove: (uuid) => ipcRenderer.invoke('auth:remove', uuid),
-    onStatus: (cb) => ipcRenderer.on('auth:status', (_e, s) => cb(s)),
+    onStatus: (cb) => onEvent('auth:status', cb),
+    offStatus: (cb) => offEvent('auth:status', cb),
   },
   game: {
     launch: (payload) => ipcRenderer.invoke('game:launch', payload),
     stop: (versionId) => ipcRenderer.invoke('game:stop', versionId),
     logs: (payload) => ipcRenderer.invoke('game:logs', payload),
     openLogs: (payload) => ipcRenderer.invoke('game:openLogs', payload),
-    onLog: (cb) => ipcRenderer.on('game:log', (_e, l) => cb(l)),
-    onExit: (cb) => ipcRenderer.on('game:exit', (_e, d) => cb(d)),
+    onLog: (cb) => onEvent('game:log', cb),
+    offLog: (cb) => offEvent('game:log', cb),
+    onExit: (cb) => onEvent('game:exit', cb),
+    offExit: (cb) => offEvent('game:exit', cb),
   },
   modloaders: {
     loaders: (mcVersion) => ipcRenderer.invoke('modloaders:loaders', mcVersion),
@@ -63,7 +88,8 @@ contextBridge.exposeInMainWorld('idk', {
     create: (payload) => ipcRenderer.invoke('modpacks:create', payload),
     list: () => ipcRenderer.invoke('modpacks:list'),
     remove: (slug) => ipcRenderer.invoke('modpacks:remove', slug),
-    onChanged: (cb) => ipcRenderer.on('modpacks:changed', () => cb()),
+    onChanged: (cb) => onEvent('modpacks:changed', cb),
+    offChanged: (cb) => offEvent('modpacks:changed', cb),
   },
   shell: {
     open: (url) => ipcRenderer.invoke('shell:open', url),

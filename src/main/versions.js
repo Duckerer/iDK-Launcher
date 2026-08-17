@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const AdmZip = require('adm-zip');
 const paths = require('./paths');
 const { tl } = require('./ti18n');
+const { currentOs, arch, rulesAllow } = require('../common/utils');
 
 const UA = 'iDK-Launcher/1.0.0';
 const MANIFEST_URL = 'https://piston-meta.mojang.com/mc/game/version_manifest_v2.json';
@@ -17,17 +18,6 @@ let manifestCache = { data: null, at: 0 };
 
 function invalidateManifestCache() {
   manifestCache = { data: null, at: 0 };
-}
-
-function currentOs() {
-  const p = process.platform;
-  if (p === 'win32') return 'windows';
-  if (p === 'darwin') return 'osx';
-  return 'linux';
-}
-
-function arch() {
-  return process.arch === 'ia32' ? '32' : '64';
 }
 
 function sha1(file) {
@@ -159,27 +149,6 @@ function libArtifact(lib) {
     return { pathParts, url: (lib.url || LIBRARY_BASE) + pathParts.join('/'), sha1: null, size: null };
   }
   return null;
-}
-
-function rulesAllow(rules) {
-  if (!rules || !rules.length) return true;
-  let allow = false;
-  for (const r of rules) {
-    let ok = true;
-    if (r.os) {
-      ok = ok && (r.os.name ? r.os.name === currentOs() : true);
-      if (r.os.arch) ok = ok && r.os.arch === arch();
-    }
-    if (r.features) {
-      for (const [k, v] of Object.entries(r.features)) {
-        ok = ok && (v ? true : false);
-      }
-    }
-    if (!ok) continue;
-    if (r.action === 'disallow') allow = false;
-    else allow = true;
-  }
-  return allow;
 }
 
 function modernNativeForOs(classifier) {
@@ -415,4 +384,4 @@ function installedVersions() {
   return list;
 }
 
-module.exports = { getManifest, invalidateManifestCache, getVersionJson, getVersionJsonForId, resolveVersion, installVersion, isInstalled, installedVersions, currentOs, arch, getNativeSpec, isNativeLibrary, libArtifact, sha1, downloadFile, nativesTargetDir };
+module.exports = { getManifest, invalidateManifestCache, getVersionJson, getVersionJsonForId, resolveVersion, installVersion, isInstalled, installedVersions, currentOs, arch, getNativeSpec, isNativeLibrary, libArtifact, sha1, downloadFile, nativesTargetDir, rulesAllow };

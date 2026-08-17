@@ -5,6 +5,10 @@
   "main": "main.js",
   "author": "duckerer",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
     "start": "electron .",
     "smoke": "electron . --smoke",
@@ -48,7 +52,8 @@
     },
     "linux": {
       "target": [
-        "AppImage"
+        "AppImage",
+        "tar.gz"
       ],
       "category": "Game",
       "icon": "build/icon.png"

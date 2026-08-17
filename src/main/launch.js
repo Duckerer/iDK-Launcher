@@ -2,30 +2,11 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const paths = require('./paths');
-const { currentOs, arch } = require('./versions');
 const { isNativeLibrary, nativesTargetDir, libArtifact } = require('./versions');
 const { tl } = require('./ti18n');
+const { rulesAllow } = require('../common/utils');
 
 const running = new Map();
-
-function rulesAllow(rules) {
-  if (!rules || !rules.length) return true;
-  let allow = false;
-  for (const r of rules) {
-    let ok = true;
-    if (r.os) {
-      ok = ok && (r.os.name ? r.os.name === currentOs() : true);
-      if (r.os.arch) ok = ok && r.os.arch === arch();
-    }
-    if (r.features) {
-      for (const [, v] of Object.entries(r.features)) ok = ok && !v;
-    }
-    if (!ok) continue;
-    if (r.action === 'disallow') allow = false;
-    else allow = true;
-  }
-  return allow;
-}
 
 function substitute(arg, tokens) {
   return String(arg).replace(/\$\{([^}]+)\}/g, (m, key) => (key in tokens ? String(tokens[key]) : m));

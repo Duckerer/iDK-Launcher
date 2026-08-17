@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data: blob: https://cdn.modrinth.com https://textures.minecraft.net https://skinsystem.ely.by https://ely.by http://ely.by" />
+  <title>iDK Launcher</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+
+  <div class="app">
+    <header class="titlebar" id="titlebar">
+      <div class="brand">
+        <span class="logo"><i></i><i></i><i></i><i></i></span>
+        <span class="brand-name">iDK&nbsp;<b>Launcher</b></span>
+      </div>
+      <div class="win-controls">
+        <button id="btn-min" data-i18n-title="win.min">&#x2212;</button>
+        <button id="btn-max" data-i18n-title="win.max">&#x25A1;</button>
+        <button id="btn-close" data-i18n-title="win.close">&#x2715;</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <nav class="nav">
+        <button class="nav-btn active" data-view="play">
+          <span class="nav-ico">&#9654;</span><span data-i18n="nav.play">Play</span>
+        </button>
+        <button class="nav-btn" data-view="versions">
+          <span class="nav-ico">&#10697;</span><span data-i18n="nav.versions">Versions</span>
+        </button>
+
+        <div class="nav-group" id="nav-modrinth">
+          <button class="nav-folder" id="nav-modrinth-toggle">
+            <span class="nav-ico">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v1"/><path d="M4 7h16v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>
+            </span>
+            <span data-i18n="nav.modrinth">Modrinth</span>
+            <span class="nav-chev">&#9656;</span>
+          </button>
+          <div class="nav-group-items">
+            <button class="nav-btn" data-view="modpacks">
+              <span class="nav-ico">&#9733;</span><span data-i18n="nav.modpacks">Modpacks</span>
+            </button>
+            <button class="nav-btn" data-view="mods">
+              <span class="nav-ico">&#9776;</span><span data-i18n="nav.mods">Mods</span>
+            </button>
+            <button class="nav-btn" data-view="resourcepacks">
+              <span class="nav-ico">&#9670;</span><span data-i18n="nav.resourcepacks">Resource packs</span>
+            </button>
+            <button class="nav-btn" data-view="shaders">
+              <span class="nav-ico">&#9673;</span><span data-i18n="nav.shaders">Shaders</span>
+            </button>
+          </div>
+        </div>
+
+        <button class="nav-btn" data-view="skins">
+          <span class="nav-ico">&#9775;</span><span data-i18n="nav.skins">Skins</span>
+        </button>
+        <button class="nav-btn" data-view="settings">
+          <span class="nav-ico">&#9881;</span><span data-i18n="nav.settings">Settings</span>
+        </button>
+      </nav>
+
+      <main>
+        <section id="view-play" class="view view-play active">
+          <div class="hero">
+            <div class="hero-glow"></div>
+            <h1 class="hero-title" data-i18n="hero.title">Welcome</h1>
+            <p class="hero-sub" data-i18n="hero.sub">Launch Minecraft, switch versions and connect accounts</p>
+          </div>
+
+          <div class="play-top">
+            <div class="status-card hidden" id="status-card">
+              <div class="status-head">
+                <span class="status-spin"></span>
+                <span id="status-text" data-i18n="status.loading">Loading...</span>
+                <span class="status-pct" id="status-pct">0%</span>
+              </div>
+              <div class="progress">
+                <div class="progress-fill" id="status-bar"></div>
+              </div>
+            </div>
+
+            <div class="log-card hidden" id="log-card">
+              <div class="log-head">
+                <span data-i18n="log.title">Game log</span>
+                <div class="log-actions">
+                  <button class="log-clear" id="btn-log-open" data-i18n="log.openFolder">Logs folder</button>
+                  <button class="log-clear" id="btn-log-clear" data-i18n="log.clear">Clear</button>
+                </div>
+              </div>
+              <pre id="log-output"></pre>
+            </div>
+          </div>
+
+          <div class="news-card hidden" id="news-card">
+            <div class="news-head">
+              <span class="news-title" data-i18n="news.title">News</span>
+              <span class="news-channel">@idklauncher</span>
+            </div>
+            <div id="news-list"></div>
+          </div>
+
+          <div class="play-bar">
+            <div class="play-selectors">
+              <button class="chip" id="chip-account">
+                <span class="chip-dot"></span>
+                <span class="chip-label" data-i18n="chip.noAccount">No account</span>
+                <span class="chip-chev">&#9662;</span>
+              </button>
+              <button class="chip" id="chip-select">
+                <span class="chip-dot" id="chip-select-dot"></span>
+                <span class="chip-label" id="chip-select-label" data-i18n="chip.selectVersionOrPack">Select a version or a modpack</span>
+                <span class="chip-chev">&#9662;</span>
+              </button>
+            </div>
+
+            <div class="play-wrap">
+              <button class="play-btn" id="btn-play">
+                <span class="play-icon">&#9654;</span>
+                <span class="play-text" id="play-text" data-i18n="play">Play</span>
+              </button>
+              <button class="play-btn stop-btn hidden" id="btn-stop">
+                <span class="play-icon">&#10005;</span>
+                <span class="play-text" data-i18n="play.stop">Close game</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-versions" class="view">
+          <div class="view-head">
+            <h2 data-i18n="versions.title">Versions</h2>
+            <button class="mods-folder-btn" id="btn-open-folder" data-i18n-title="versions.folder" data-i18n="versions.folder">Folder</button>
+          </div>
+          <div class="search-row">
+            <input class="search" id="search-versions" type="text" data-i18n-ph="versions.search" />
+            <button class="btn-loader" id="btn-modloader" data-i18n="versions.modloader">+ Mod loader</button>
+          </div>
+          <div class="cat-row">
+            <div class="cat-bar" id="cat-bar"></div>
+            <button type="button" class="custom-check" id="chk-installed-only" role="checkbox" aria-checked="false">
+              <span class="custom-check-box"></span>
+              <span class="custom-check-label" data-i18n="installedOnly">Installed only</span>
+            </button>
+          </div>
+          <div class="version-grid" id="version-grid"></div>
+        </section>
+
+        <section id="view-modpacks" class="view">
+          <div class="view-head">
+            <h2 data-i18n="modpacks.title">Modpacks</h2>
+            <button class="mods-folder-btn" id="btn-create-pack" data-i18n="modpacks.create">Create modpack</button>
+          </div>
+          <div class="mods-toolbar">
+            <div class="mods-row1">
+              <input class="search search-wide" id="modpack-search" type="text" data-i18n-ph="modpacks.search" />
+              <button class="btn-primary" id="btn-modpack-search" data-i18n="modpacks.searchBtn">Search</button>
+            </div>
+            <div class="mods-filter-line" id="mp-line-category">
+              <span class="mods-filter-label" data-i18n="filter.categories">Categories:</span>
+              <div class="mods-group" id="modpack-category"></div>
+            </div>
+            <div class="mods-filter-line" id="mp-line-env">
+              <span class="mods-filter-label" data-i18n="filter.environment">Environment:</span>
+              <div class="mods-group" id="modpack-env"></div>
+            </div>
+            <div class="mods-filter-line" id="mp-line-loader">
+              <span class="mods-filter-label" data-i18n="filter.loader">Mod loader:</span>
+              <div class="mods-group" id="modpack-loader"></div>
+            </div>
+            <div class="mods-filter-line mods-line-scroll" id="mp-line-versions">
+              <span class="mods-filter-label" data-i18n="filter.versions">Versions:</span>
+              <div class="mods-chips-scroll">
+                <div class="mods-group" id="modpack-mc-version"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mp-installed">
+            <h3 data-i18n="modpacks.installedTitle">Installed modpacks</h3>
+            <div class="mp-installed-list" id="modpack-installed"></div>
+          </div>
+          <div class="mods-grid" id="modpack-grid"></div>
+          <div class="pager" id="modpack-pager"></div>
+          <p class="mods-hint" id="modpack-hint"></p>
+        </section>
+
+        <section id="view-browse" class="view">
+          <div class="view-head">
+            <h2 id="browse-title">Mods</h2>
+            <button class="mods-folder-btn" id="btn-mods-folder">Open mods folder</button>
+          </div>
+          <div class="mods-toolbar">
+            <div class="mods-row1">
+              <input class="search search-wide" id="mods-search" type="text" placeholder="Search mods..." />
+              <button class="btn-primary" id="btn-mods-search" data-i18n="modpacks.searchBtn">Search</button>
+            </div>
+            <div class="mods-filter-line" id="line-category">
+              <span class="mods-filter-label" data-i18n="filter.categories">Categories:</span>
+              <div class="mods-group" id="mods-category"></div>
+            </div>
+            <div class="mods-filter-line" id="line-feature">
+              <span class="mods-filter-label" data-i18n="filter.features">Features:</span>
+              <div class="mods-group" id="mods-feature"></div>
+            </div>
+            <div class="mods-filter-line" id="line-impact">
+              <span class="mods-filter-label" data-i18n="filter.impact">Performance impact:</span>
+              <div class="mods-group" id="mods-impact"></div>
+            </div>
+            <div class="mods-filter-line" id="line-resolution">
+              <span class="mods-filter-label" data-i18n="filter.resolution">Resolution:</span>
+              <div class="mods-group" id="mods-resolution"></div>
+            </div>
+            <div class="mods-filter-line" id="line-env">
+              <span class="mods-filter-label" data-i18n="filter.environment">Environment:</span>
+              <div class="mods-group" id="mods-env"></div>
+            </div>
+            <div class="mods-filter-line" id="line-vercats">
+              <span class="mods-filter-label" data-i18n="filter.versionCategories">Version categories:</span>
+              <div class="mods-group" id="mods-vercats"></div>
+            </div>
+            <div class="mods-filter-line mods-line-scroll" id="line-versions">
+              <span class="mods-filter-label" data-i18n="filter.versions">Versions:</span>
+              <div class="mods-chips-scroll">
+                <div class="mods-group" id="mods-mc-version"></div>
+              </div>
+            </div>
+            <div class="mods-filter-line" id="line-loader">
+              <span class="mods-filter-label" data-i18n="filter.loader">Mod loader:</span>
+              <div class="mods-group" id="mods-loader-tabs"></div>
+            </div>
+          </div>
+          <div class="mods-grid" id="mods-grid"></div>
+          <div class="pager" id="mods-pager"></div>
+          <p class="mods-hint" id="mods-hint"></p>
+        </section>
+
+        <section id="view-skins" class="view">
+          <div class="view-head">
+            <h2 data-i18n="skins.title">Skins</h2>
+            <div class="skins-acc-chips" id="skins-acc-chips"></div>
+          </div>
+          <div class="skins-previews">
+            <div class="skins-cell">
+              <canvas id="skins-preview" width="220" height="260"></canvas>
+              <span class="skins-cell-label" id="skins-prev-label" data-i18n="skins.current">Current skin</span>
+              <div class="seg skins-model" id="skins-model">
+                <button type="button" class="seg-btn active" data-model="classic" data-i18n="skins.modelClassic">Classic</button>
+                <button type="button" class="seg-btn" data-model="slim" data-i18n="skins.modelSlim">Slim</button>
+              </div>
+            </div>
+          </div>
+          <div class="skins-panel">
+            <div class="skins-panel-row">
+              <span class="skins-panel-title" data-i18n="skins.skinPanel">Skin</span>
+              <button class="btn-ghost hidden" id="skins-apply" data-i18n="skins.apply">Apply skin</button>
+              <button class="btn-danger" id="skins-reset" data-i18n="skins.reset">Reset</button>
+            </div>
+            <div class="skins-gallery-row" id="skins-gallery"></div>
+          </div>
+          <div class="login-status hidden" id="skins-status"></div>
+          <p class="panel-hint" id="skins-hint"></p>
+        </section>
+
+        <section id="view-settings" class="view">
+          <div class="view-head"><h2 data-i18n="settings.title">Settings</h2></div>
+          <div class="settings-grid">
+            <div class="setting-card">
+              <h3 data-i18n="settings.ram">Memory (RAM)</h3>
+              <p class="setting-desc" data-i18n="settings.ramDesc">How much RAM to allocate to the game (MB)</p>
+              <div class="ram-row">
+                <input type="range" id="ram-slider" min="1024" max="16384" step="512" value="2048" />
+                <span class="ram-value" id="ram-value">2 GB</span>
+              </div>
+              <div class="ram-presets">
+                <button data-mb="2048">2 GB</button>
+                <button data-mb="4096">4 GB</button>
+                <button data-mb="8192">8 GB</button>
+                <button data-mb="16384">16 GB</button>
+              </div>
+            </div>
+
+            <div class="setting-card">
+              <h3 data-i18n="settings.java">Java</h3>
+              <p class="setting-desc" data-i18n="settings.javaDesc">Path to Java. Empty — auto-detect</p>
+              <div class="path-row">
+                <input type="text" id="java-path" data-i18n-ph="settings.javaAutoPh" readonly />
+                <button id="btn-java-auto" data-i18n="settings.auto">Auto</button>
+                <button id="btn-java-pick" data-i18n="settings.pick">Pick</button>
+              </div>
+              <div class="java-detect" id="java-detect"></div>
+            </div>
+
+            <div class="setting-card">
+              <h3 data-i18n="settings.jvmArgs">JVM arguments</h3>
+              <p class="setting-desc" data-i18n="settings.jvmArgsDesc">Extra arguments passed to Java at launch (e.g. --noverify)</p>
+              <div class="field">
+                <input type="text" id="jvm-args" placeholder="--noverify -XX:+UseZGC" />
+              </div>
+            </div>
+
+            <div class="setting-card">
+              <h3 data-i18n="settings.appearance">Appearance</h3>
+              <p class="setting-desc" data-i18n="settings.appearanceDesc">Theme and accent color</p>
+              <div class="theme-row" id="theme-row">
+                <button data-theme="dark" data-i18n="theme.dark">Dark</button>
+                <button data-theme="oled" data-i18n="theme.oled">OLED</button>
+                <button data-theme="aurora" data-i18n="theme.aurora">Aurora</button>
+                <button data-theme="light" data-i18n="theme.light">Light</button>
+              </div>
+              <div class="accent-row">
+                <input type="color" id="accent-picker" value="#4ade80" data-i18n-title="settings.customColor" />
+                <div class="accent-swatches" id="accent-swatches">
+                  <button style="background:#4ade80" data-accent="#4ade80" title="#4ade80"></button>
+                  <button style="background:#3b82f6" data-accent="#3b82f6" title="#3b82f6"></button>
+                  <button style="background:#a855f7" data-accent="#a855f7" title="#a855f7"></button>
+                  <button style="background:#f59e0b" data-accent="#f59e0b" title="#f59e0b"></button>
+                  <button style="background:#ef4444" data-accent="#ef4444" title="#ef4444"></button>
+                  <button style="background:#22d3ee" data-accent="#22d3ee" title="#22d3ee"></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-card">
+              <h3 data-i18n="settings.language">Language</h3>
+              <div class="field">
+                <select id="language-select">
+                </select>
+              </div>
+            </div>
+
+            <div class="setting-card">
+              <h3 data-i18n="settings.gameDir">Game folder</h3>
+              <p class="setting-desc" data-i18n="settings.gameDirDesc">Where to download game files</p>
+              <div class="path-row">
+                <input type="text" id="game-dir" readonly />
+                <button id="btn-dir-pick" data-i18n="settings.pick">Pick</button>
+                <button id="btn-dir-open" data-i18n="settings.open">Open</button>
+              </div>
+            </div>
+
+            <div class="setting-card">
+              <h3 data-i18n="settings.microsoft">Microsoft</h3>
+              <p class="setting-desc">
+                <span data-i18n="settings.msDesc">Client ID of your Azure app and redirect URI.</span>
+                <a href="#" id="ms-help" data-i18n="settings.msHow">How to get</a>
+              </p>
+              <div class="field">
+                <label data-i18n="settings.clientId">Client ID</label>
+                <input type="text" id="ms-client-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+              </div>
+              <div class="field">
+                <label data-i18n="settings.redirectUri">Redirect URI</label>
+                <input type="text" id="ms-redirect" placeholder="http://127.0.0.1:54434/callback" />
+              </div>
+            </div>
+
+            <div class="setting-card">
+              <h3 data-i18n="settings.about">About</h3>
+              <p class="setting-desc" data-i18n="settings.aboutDesc">Author and official channels:</p>
+              <div class="author-links">
+                <a class="author-link" data-author="user" href="https://t.me/duckererer">@duckererer</a>
+                <a class="author-link" data-author="channel" href="https://t.me/duckerer">@duckerer</a>
+                <a class="author-link" data-author="channel" href="https://t.me/idklauncher">@idklauncher</a>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="overlay"></div>
+
+  <div class="modal hidden" id="modal-login">
+    <div class="modal-head">
+      <h3 data-i18n="accounts.signIn">Sign in</h3>
+      <button class="modal-close" data-close>&#x2715;</button>
+    </div>
+    <div class="tabs" id="login-tabs">
+      <button class="tab active" data-method="offline" data-i18n="login.offline">Offline</button>
+      <button class="tab" data-method="elyby" data-i18n="login.elyby">Ely.by</button>
+      <button class="tab" data-method="microsoft" data-i18n="login.microsoft">Microsoft</button>
+    </div>
+
+    <div class="tab-panel active" data-panel="offline">
+      <p class="panel-hint" data-i18n="login.offlineHint">Play without an account — just a nickname. Skins won't work, online servers with auth check will reject you.</p>
+      <div class="field"><label data-i18n="login.nick">Nickname</label><input type="text" id="offline-nick" maxlength="16" placeholder="Steve" /></div>
+      <button class="btn-primary" id="btn-offline-go" data-i18n="login.signInBtn">Sign in</button>
+    </div>
+
+    <div class="tab-panel" data-panel="elyby">
+      <p class="panel-hint" data-i18n="login.elybyHint">Sign in via the free skin service Ely.by.</p>
+      <div class="field"><label data-i18n="login.loginOrEmail">Login or e-mail</label><input type="text" id="ely-user" autocomplete="off" /></div>
+      <div class="field"><label data-i18n="login.password">Password</label><input type="password" id="ely-pass" /></div>
+      <button class="btn-primary" id="btn-elyby-go" data-i18n="login.signInBtn">Sign in</button>
+    </div>
+
+    <div class="tab-panel" data-panel="microsoft">
+      <p class="panel-hint" data-i18n="login.msHint">Official Microsoft account. Requires a Client ID from launcher settings.</p>
+      <button class="btn-primary" id="btn-ms-go" data-i18n="login.msGo">Sign in via browser</button>
+      <div class="login-status hidden" id="ms-status"></div>
+      <a href="#" class="ms-help-link" id="ms-help-login" data-i18n="login.msHelp">Need help? Open the guide</a>
+    </div>
+  </div>
+
+  <div class="modal modal-confirm hidden" id="modal-mshelp">
+    <div class="modal-head">
+      <h3 data-i18n="mshelp.title">Microsoft sign-in help</h3>
+      <button class="modal-close" data-close>&#x2715;</button>
+    </div>
+    <div class="mshelp-scroll">
+      <p class="panel-hint" data-i18n="mshelp.hint">iDK uses the standard Microsoft OAuth flow.</p>
+      <h4 data-i18n="mshelp.stepsTitle">How to set up</h4>
+      <ol class="mshelp-list">
+        <li data-i18n="mshelp.step1"></li>
+        <li data-i18n="mshelp.step2"></li>
+        <li data-i18n="mshelp.step3"></li>
+        <li data-i18n="mshelp.step4"></li>
+        <li data-i18n="mshelp.step5"></li>
+      </ol>
+      <h4 data-i18n="mshelp.errorsTitle">Common problems</h4>
+      <ul class="mshelp-list">
+        <li data-i18n="mshelp.err1"></li>
+        <li data-i18n="mshelp.err2"></li>
+        <li data-i18n="mshelp.err3"></li>
+        <li data-i18n="mshelp.err4"></li>
+      </ul>
+    </div>
+    <div class="mshelp-links">
+      <a href="#" id="mshelp-azure" data-i18n="mshelp.link">Open Azure app registration</a>
+      <a href="#" id="mshelp-buy" data-i18n="mshelp.needBuy">Buy Minecraft</a>
+    </div>
+    <div class="confirm-actions">
+      <button class="btn-primary" data-close data-i18n="mshelp.ok">Got it</button>
+    </div>
+  </div>
+
+  <div class="modal modal-accounts hidden" id="modal-accounts">
+    <div class="modal-head">
+      <h3 data-i18n="accounts.title">Accounts</h3>
+      <button class="modal-close" data-close>&#x2715;</button>
+    </div>
+    <div class="acc-list" id="acc-list"></div>
+    <button class="btn-ghost btn-block" id="btn-manage-skin" data-i18n="skins.manage">Skins</button>
+    <button class="btn-primary btn-block" id="btn-add-account" data-i18n="accounts.add">Add account</button>
+  </div>
+
+  <div class="modal modal-pick hidden" id="modal-pick">
+    <div class="modal-head">
+      <h3 data-i18n="chip.selectVersionOrPack">Select a version or a modpack</h3>
+      <button class="modal-close" data-close>&#x2715;</button>
+    </div>
+    <div class="seg picker-tabs">
+      <button class="seg-btn" id="tab-version" data-i18n="play.tabVersion">Versions</button>
+      <button class="seg-btn" id="tab-modpack" data-i18n="play.tabModpack">Modpacks</button>
+    </div>
+    <div class="verpick-list" id="play-picker-list"></div>
+    <button class="btn-primary btn-block" id="btn-pick-install"></button>
+  </div>
+
+  <div class="modal modal-modloader hidden" id="modal-modloader">
+    <div class="modal-head">
+      <h3 data-i18n="ml.title">Install mod loader</h3>
+      <button class="modal-close" data-close>&#x2715;</button>
+    </div>
+    <div class="field">
+      <label data-i18n="ml.mcVersion">Minecraft version</label>
+      <select id="ml-mc"></select>
+    </div>
+    <div class="field">
+      <label data-i18n="ml.loader">Mod loader</label>
+      <div class="loader-type" id="ml-type"></div>
+    </div>
+    <div class="field">
+      <label data-i18n="ml.loaderVersion">Mod loader version</label>
+      <select id="ml-loader-version" disabled></select>
+    </div>
+    <button class="btn-primary" id="btn-ml-install" data-i18n="ml.install">Install</button>
+    <p class="panel-hint ml-hint" data-i18n="ml.loading">Loading mod loader versions...</p>
+  </div>
+
+  <div class="modal modal-confirm hidden" id="modal-confirm">
+    <div class="modal-head">
+      <h3 data-i18n="confirm.title">Confirmation</h3>
+      <button class="modal-close" data-close>&#x2715;</button>
+    </div>
+    <p class="panel-hint" id="confirm-text"></p>
+    <div class="confirm-actions">
+      <button class="btn-ghost confirm-no" id="btn-confirm-no" data-i18n="confirm.cancel">Cancel</button>
+      <button class="btn-danger" id="btn-confirm-yes" data-i18n="confirm.delete">Delete</button>
+    </div>
+  </div>
+
+  <div class="modal modal-confirm hidden" id="modal-agreements">
+    <div class="modal-head">
+      <h3 data-i18n="agree.title">Agreements</h3>
+    </div>
+    <p class="panel-hint" data-i18n="agree.text">Before using the launcher, please accept:</p>
+    <div class="agree-item">
+      <button type="button" class="custom-check" id="agree-eula" role="checkbox" aria-checked="false">
+        <span class="custom-check-box"></span>
+        <span class="custom-check-label" data-i18n="agree.eula">Minecraft End User License Agreement (EULA)</span>
+      </button>
+      <a class="agree-open" href="https://www.minecraft.net/en-us/eula" data-i18n="agree.open">Open</a>
+    </div>
+    <div class="agree-item">
+      <button type="button" class="custom-check" id="agree-tos" role="checkbox" aria-checked="false">
+        <span class="custom-check-box"></span>
+        <span class="custom-check-label" data-i18n="agree.modrinth">Modrinth Terms of Use &amp; Content Policy</span>
+      </button>
+      <a class="agree-open" href="https://modrinth.com/legal/terms" data-i18n="agree.open">Open</a>
+    </div>
+    <div class="confirm-actions">
+      <button class="btn-primary" id="btn-agree-ok" data-i18n="agree.accept">Accept &amp; continue</button>
+    </div>
+  </div>
+
+  <div class="modal modal-modpick hidden" id="modal-modpick">
+    <div class="modal-head">
+      <h3 id="modpick-title">Install mod</h3>
+      <button class="modal-close" data-close>&#x2715;</button>
+    </div>
+    <p class="panel-hint" id="modpick-hint">Select a Minecraft version and mod loader.</p>
+    <div class="field">
+      <label data-i18n="ml.mcVersion">Minecraft version</label>
+      <select id="modpick-version"></select>
+    </div>
+    <div class="field">
+      <label data-i18n="ml.loader">Mod loader</label>
+      <select id="modpick-loader"></select>
+    </div>
+    <div class="confirm-actions">
+      <button class="btn-ghost" id="btn-modpick-cancel" data-i18n="confirm.cancel">Cancel</button>
+      <button class="btn-primary" id="btn-modpick-ok" data-i18n="mods.install">Install</button>
+    </div>
+  </div>
+
+  <div class="modal modal-modpick hidden" id="modal-modpack-pick">
+    <div class="modal-head">
+      <h3 id="modpack-pick-title">Install modpack</h3>
+      <button class="modal-close" data-close>&#x2715;</button>
+    </div>
+    <p class="panel-hint" id="modpack-pick-hint">Select a modpack version.</p>
+    <div class="field">
+      <label data-i18n="modpacks.version">Version</label>
+      <select id="modpack-pick-version"></select>
+    </div>
+    <div class="confirm-actions">
+      <button class="btn-ghost" id="btn-modpack-pick-cancel" data-i18n="confirm.cancel">Cancel</button>
+      <button class="btn-primary" id="btn-modpack-pick-ok" data-i18n="mods.install">Install</button>
+    </div>
+  </div>
+
+  <div class="modal modal-modpick hidden" id="modal-create-pack">
+    <div class="modal-head">
+      <h3 data-i18n="modpacks.createTitle">Create modpack</h3>
+      <button class="modal-close" data-close>&#x2715;</button>
+    </div>
+    <p class="panel-hint" data-i18n="modpacks.createHint">The new modpack will be stored separately from the main Minecraft folder.</p>
+    <div class="field">
+      <label data-i18n="modpacks.name">Name</label>
+      <input type="text" id="create-pack-name" data-i18n-ph="modpacks.name" />
+    </div>
+    <div class="field">
+      <label data-i18n="modpacks.mcVersion">Minecraft version</label>
+      <select id="create-pack-mc"></select>
+    </div>
+    <div class="field">
+      <label data-i18n="modpacks.loader">Mod loader</label>
+      <select id="create-pack-loader"></select>
+    </div>
+    <div class="field" id="create-pack-ldver-field">
+      <label data-i18n="modpacks.loaderVersion">Mod loader version</label>
+      <select id="create-pack-ldver"></select>
+    </div>
+    <div class="confirm-actions">
+      <button class="btn-ghost" id="btn-create-pack-cancel" data-i18n="confirm.cancel">Cancel</button>
+      <button class="btn-primary" id="btn-create-pack-ok" data-i18n="modpacks.createBtn">Create</button>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+
+  <script src="../common/i18n.js"></script>
+  <script src="../common/lang/de.js"></script>
+  <script src="../common/lang/fr.js"></script>
+  <script src="../common/lang/es.js"></script>
+  <script src="../common/lang/it.js"></script>
+  <script src="../common/lang/pl.js"></script>
+  <script src="../common/lang/uk.js"></script>
+  <script src="defaultSkins.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

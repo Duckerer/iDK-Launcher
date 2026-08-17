@@ -465,7 +465,7 @@ main { flex: 1; min-width: 0; overflow-y: auto; padding: 22px 30px 30px; }
 .news-item:last-child { border-bottom: 0; }
 .news-item:hover { background: rgba(255, 255, 255, 0.04); }
 .news-date { flex: none; min-width: 66px; font-size: 11px; color: var(--muted); padding-top: 1px; }
-.news-text { font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; max-height: 72px; overflow: hidden; }
+.news-text { font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
 
 /* ---------- log ---------- */
 .log-card {

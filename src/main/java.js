@@ -228,7 +228,7 @@ async function downloadJava(requiredMajor, { onProgress } = {}) {
       const r = spawnSync('tar', ['-xf', tmpFile, '-C', destDir], { stdio: 'ignore' });
       ok = r.status === 0;
       if (!ok) {
-        const ps = spawnSync('powershell', ['-NoProfile', '-Command', `Expand-Archive -LiteralPath '${tmpFile}' -DestinationPath '${destDir}' -Force`], { stdio: 'ignore' });
+        const ps = spawnSync('powershell', ['-NoProfile', '-Command', `Expand-Archive -LiteralPath '${tmpFile.replace(/'/g, "''")}' -DestinationPath '${destDir.replace(/'/g, "''")}' -Force`], { stdio: 'ignore' });
         ok = ps.status === 0;
       }
     } else {

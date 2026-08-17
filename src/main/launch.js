@@ -157,7 +157,8 @@ function launchGame({ versionId, versionJson, account, java, settings, gameDir, 
   proc.stdout && proc.stdout.on('data', (d) => String(d).split(/\r?\n/).filter(Boolean).forEach(forward));
   proc.stderr && proc.stderr.on('data', (d) => String(d).split(/\r?\n/).filter(Boolean).forEach(forward));
   proc.on('error', (e) => {
-    forward(tl('launch.error', { msg: e.message }));    if (onExit) onExit(e.code || 1);
+    forward(tl('launch.error', { msg: e.message }));
+    if (onExit) onExit(e.code || 1);
   });
   proc.on('exit', (code) => {
     logStream.end();

@@ -1,6 +1,8 @@
-const { app } = require('electron');
+const { app, safeStorage } = require('electron');
 const fs = require('fs');
 const path = require('path');
+
+const SENSITIVE_KEYS = ['accessToken', 'msRefreshToken'];
 
 class Store {
   constructor() {
@@ -12,6 +14,7 @@ class Store {
     this.file = path.join(app.getPath('userData'), 'settings.json');
     try {
       this.data = JSON.parse(fs.readFileSync(this.file, 'utf8'));
+      this.decryptAccounts();
     } catch {
       this.data = {};
     }
@@ -35,13 +38,49 @@ class Store {
       cur = cur[keys[i]];
     }
     cur[keys[keys.length - 1]] = value;
+    if (key === 'accounts') this.data.accounts = value;
     this.save();
   }
 
   save() {
     if (!this.file) return;
+    const toSave = JSON.parse(JSON.stringify(this.data));
+    if (Array.isArray(toSave.accounts)) {
+      toSave.accounts = toSave.accounts.map((a) => this.encryptAccount(a));
+    }
     fs.mkdirSync(path.dirname(this.file), { recursive: true });
-    fs.writeFileSync(this.file, JSON.stringify(this.data, null, 2));
+    fs.writeFileSync(this.file, JSON.stringify(toSave, null, 2));
+  }
+
+  encryptAccount(acc) {
+    if (!safeStorage.isEncryptionAvailable()) return acc;
+    const out = { ...acc };
+    for (const k of SENSITIVE_KEYS) {
+      if (out[k] && typeof out[k] === 'string' && !out[k].startsWith('enc:')) {
+        out[k] = 'enc:' + safeStorage.encryptString(out[k]).toString('base64');
+      }
+    }
+    return out;
+  }
+
+  decryptAccounts() {
+    if (!Array.isArray(this.data.accounts)) return;
+    this.data.accounts = this.data.accounts.map((a) => this.decryptAccount(a));
+  }
+
+  decryptAccount(acc) {
+    if (!safeStorage.isEncryptionAvailable()) return acc;
+    const out = { ...acc };
+    for (const k of SENSITIVE_KEYS) {
+      if (out[k] && typeof out[k] === 'string' && out[k].startsWith('enc:')) {
+        try {
+          out[k] = safeStorage.decryptString(Buffer.from(out[k].slice(4), 'base64'));
+        } catch {
+          out[k] = '';
+        }
+      }
+    }
+    return out;
   }
 
   accounts() {
